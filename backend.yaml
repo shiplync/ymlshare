@@ -1,0 +1,43 @@
+#backend service
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: mytestapp-be
+  name: mytestapp-be-service
+  namespace: default
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80             # (The port of the container to be accessed)
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: mytestapp-be         # (A selector matching the replication controller pod label)
+    tier: backend
+#----------------------------------------
+#backend rc
+kind: "ReplicationController"
+apiVersion: "v1"
+metadata:
+  name: "mytestapp-backend"       # (Displayed name for the RC)
+spec:
+  replicas: 2                        # (Number of copies of the pod to have running at any given time)
+  template:
+    metadata:
+      labels:
+        app: "mytestapp-be"
+        tier: backend
+        track: stable
+    spec:
+      containers:
+        - name: "mytestapp-be"     # (Display name for the container)
+          image: "gcr.io/ieisite-163707/ex-backend"   # (Docker image to create container with)
+          ports:
+            - containerPort: 8080    # (Container port to expose)
+          livenessProbe:
+            httpGet:                 # (Use http healthcheck to verify health of container)
+              path: /                # (URL to verify health at)
+              port: 80             # (Port to connect to via HTTP)
+            initialDelaySeconds: 5   # (how long to wait before starting healthcheck)
+            timeoutSeconds: 2        # (How long to wait before healthcheck fails)
